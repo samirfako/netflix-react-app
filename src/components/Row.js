@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../axios';
 import './Row.css';
+import Youtube from 'react-youtube';
+import movieTrailer from 'movie-trailer';
 
 const base_url = 'https://image.tmdb.org/t/p/original/';
 
 const Row = ({ title, fetchUrl, isLargeRow }) => {
   const [movies, setMovies] = useState([]);
+  const [trailerUrl, setTrailerUrl] = useState('');
 
   // we need a snippet of code which runs based on a specific condition/variable
   useEffect(() => {
@@ -21,6 +24,30 @@ const Row = ({ title, fetchUrl, isLargeRow }) => {
   }, [fetchUrl]);
   // console.table(movies);
 
+  const opts = {
+    height: '390',
+    width: '100%',
+    playerVars: {
+      autoplay: 1,
+    },
+  };
+  // importing video trailer by clicking an image
+  const handleClick = (movie) => {
+    if (trailerUrl) {
+      // with set trailer we make a video non visible
+      setTrailerUrl('');
+    } else {
+      // movieTrailer search through youtube videos to find right trailer
+      movieTrailer(movie?.name || movie?.title || '')
+        .then((url) => {
+          // https://www.youtube.com/watch?v=wVjzK874ELY <==== v= is what we looking for
+          const urlParams = new URLSearchParams(new URL(url).search);
+          setTrailerUrl(urlParams.get('v'));
+        })
+        .catch((error) => console.log(error));
+    }
+  };
+
   return (
     <div className="row">
       <h2>{title}</h2>
@@ -30,6 +57,7 @@ const Row = ({ title, fetchUrl, isLargeRow }) => {
         {movies.map((movie) => (
           <img
             key={movie.id}
+            onClick={() => handleClick(movie)}
             className={`row__poster ${isLargeRow && 'row__posterLarge'}`}
             // single image
             src={`${base_url}${
@@ -39,6 +67,7 @@ const Row = ({ title, fetchUrl, isLargeRow }) => {
           />
         ))}
       </div>
+      {trailerUrl && <Youtube videoId={trailerUrl} opts={opts} />}
     </div>
   );
 };
